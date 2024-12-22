@@ -5,46 +5,137 @@ from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import time
 
+import json
+
 from config import Config
+from csv_manager import CsvManager
 
-# ChromeDriver 설정
-options = webdriver.ChromeOptions()
-options.add_argument("--headless")  # 브라우저 창을 열지 않음 (옵션)
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
 
-# WebDriver 생성
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-# URL로 이동
-driver.get(Config.ANNOUNCEMENT_LINK)
+# 이전 데이터들 불러오기
 
-# 페이지가 JavaScript를 로드할 시간을 기다림
-time.sleep(3)  # 필요에 따라 조정
+# # csv파일 열어서 dictionary로 파싱
+# data_dict = {}
 
-# 페이지 소스 가져오기
-html = driver.page_source
 
-# BeautifulSoup으로 파싱
-soup = BeautifulSoup(html, 'html.parser')
+def is_data_exist(post_number, data_dict):
+    return post_number in data_dict
 
-# tbody 태그 선택
-tbody = soup.select_one('tbody')
 
-# 공지사항 추출
-if tbody:
-    rows = tbody.select('tr')
-    for row in rows:
-        cols = row.find_all('td')
-        if cols:
-            post_number = cols[0].text.strip()
-            post_title = cols[2].text.strip()  # 제목 (3번째 열)
-            post_url = Config.ROOT_RUL + cols[2].select_one('a').get('href')
-            post_date = cols[3].text.strip()  # 게시 날짜 (4번째 열)
-            application_date = cols[4].text.strip() # 청약 신청일 (5번째 열)
-            print(f"제목: {post_title}, 날짜: {post_date}, 신청일: {application_date}, 글링크: {post_url}")
-else:
-    print("tbody 태그를 찾을 수 없습니다.")
+def is_new_data(post_number, data_dict):
+    if len(data_dict.keys()) == 0:
+        return True
+    
+    return max(list(map(int, data_dict.keys()))) < int(post_number)
 
-# 브라우저 닫기
-driver.quit()
+
+def get_latest_contests():
+    """
+    가장 최근 공모를 리턴함
+    """
+
+    # csv파일 열어서 dictionary로 파싱
+    data_dict = CsvManager.csv_to_dict_by_key(Config.POST_NUMBER_KEY)
+
+    max_post_number = max(list(map(int, data_dict.keys())))
+    row_dict = data_dict[str(max_post_number)]
+
+    # 딕셔너리를 JSON 문자열로 변환
+    json_string = json.dumps(row_dict, ensure_ascii=False, indent=4)
+
+    return json_string
+
+
+
+def process_contest_check():
+    """
+    새로 올라온 공모를 확인하고, 새로 올라온 공모를 저장함
+    
+    Args:
+        soup : 서울 청년주택 공식 홈페이지 - 공모공지 게시판 웹 크롤링 데이터
+        tbody : 게시글 테이블
+        new_data_dict : 새로 올라온 공고글 데이터
+    """
+    
+    # csv파일 열어서 dictionary로 파싱
+    data_dict = CsvManager.csv_to_dict_by_key(Config.POST_NUMBER_KEY)
+
+
+    # ChromeDriver 설정
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # 브라우저 창을 열지 않음 (옵션)
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    # WebDriver 생성
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    # URL로 이동
+    driver.get(Config.ANNOUNCEMENT_LINK)
+
+    # 페이지가 JavaScript를 로드할 시간을 기다림
+    time.sleep(3)  # 필요에 따라 조정
+
+    # 페이지 소스 가져오기
+    html = driver.page_source
+
+    # BeautifulSoup으로 파싱
+    soup = BeautifulSoup(html, 'html.parser')
+
+    # tbody 태그 선택
+    tbody = soup.select_one('tbody')
+
+    result = False
+    # 공지사항 추출
+    if tbody:
+        rows = tbody.select('tr')
+
+        new_data_dict = {}
+
+        for row in rows:
+            cols = row.find_all('td')
+            if cols:
+                post_number = cols[0].text.strip()
+
+                # 새로운 글 번호 이면 new_data_dict에 저장
+                # 새로운 글 번호는 이전에 db에 저장해둔 글 번호들중 max값 보다 큰 값이라고 상정
+                if is_new_data(post_number, data_dict):
+                    post_title = cols[2].text.strip()  # 제목 (3번째 열)
+                    post_url = Config.ROOT_RUL + cols[2].select_one('a').get('href') # 글링크 (3번쨰 열의 href태그 값)
+                    post_date = cols[3].text.strip()  # 게시 날짜 (4번째 열)
+                    application_date = cols[4].text.strip() # 청약 신청일 (5번째 열)
+
+                    data = {
+                        Config.POST_NUMBER_KEY : post_number,
+                        Config.POST_TITLE_KEY : post_title,
+                        Config.POST_URL_KEY : post_url,
+                        Config.POST_DATE_KEY : post_date,
+                        Config.APPLICATION_DATE_KEY : application_date
+                    }
+                    
+
+                    new_data_dict[post_number] = data
+
+        # 새로운 값이 있으면 db에 추가
+        if len(new_data_dict.keys()) > 0:
+            for new_key in new_data_dict.keys():
+                data_dict[new_key] = new_data_dict[new_key]
+
+            # csv 저장
+            CsvManager.save_dict_to_csv(data_dict)
+
+            result = True
+        
+    else:
+        print("tbody 태그를 찾을 수 없습니다.")
+
+
+    # 브라우저 닫기
+    driver.quit()
+
+    return result
+
+
+if __name__ == "__main__":
+    print(process_contest_check())
+    print(get_latest_contests())
