@@ -5,14 +5,12 @@ from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import time
 
-import json
-
 from config import Config
 from csv_manager import CsvManager
 
 
 class WebDataProcessor:
-    
+
     def is_new_data(post_number, data_dict):
         if len(data_dict.keys()) == 0:
             return True
@@ -31,10 +29,7 @@ class WebDataProcessor:
         max_post_number = max(list(map(int, data_dict.keys())))
         row_dict = data_dict[str(max_post_number)]
 
-        # 딕셔너리를 JSON 문자열로 변환
-        json_string = json.dumps(row_dict, ensure_ascii=False, indent=4)
-
-        return json_string
+        return row_dict
 
 
 
@@ -65,7 +60,7 @@ class WebDataProcessor:
         driver.get(Config.ANNOUNCEMENT_LINK)
 
         # 페이지가 JavaScript를 로드할 시간을 기다림
-        time.sleep(3)  # 필요에 따라 조정
+        time.sleep(0.5)  # 필요에 따라 조정
 
         # 페이지 소스 가져오기
         html = driver.page_source
