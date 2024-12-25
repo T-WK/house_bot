@@ -11,3 +11,6 @@ class Config:
     POST_URL_KEY = "글링크"
     POST_DATE_KEY = "게시일"
     APPLICATION_DATE_KEY = "신청일"
+
+    # logo
+    LOGO_FILE_PATH = "../logo/crawler_logo.txt"

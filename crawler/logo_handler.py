@@ -1,0 +1,2 @@
+class LogoHandler:
+    pass
