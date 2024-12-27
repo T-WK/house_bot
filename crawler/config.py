@@ -6,11 +6,11 @@ class Config:
     CSV_FILENAME = "./crawler/board_data.csv"
 
     # dict key
-    POST_NUMBER_KEY = "글번호"
-    POST_TITLE_KEY = "제목"
-    POST_URL_KEY = "글링크"
-    POST_DATE_KEY = "게시일"
-    APPLICATION_DATE_KEY = "신청일"
+    POST_NUMBER_KEY = "post_number"
+    POST_TITLE_KEY = "post_title"
+    POST_URL_KEY = "post_url"
+    POST_DATE_KEY = "post_date"
+    APPLICATION_DATE_KEY = "application_date"
 
     # logo
     LOGO_FILE_PATH = "../logo/crawler_logo.txt"
