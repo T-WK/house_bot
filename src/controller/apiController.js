@@ -1,5 +1,5 @@
 require('dotenv').config();
-const generateBotMessage = require('./botMessageController');
+const { generateBotMessage } = require('./botMessageController');
 const axios = require('axios');
 const logger = require('../utils/logger');
 
@@ -17,27 +17,32 @@ const checkNewPost = async () => {
         }
         return response.data.data === true; // 반환 값이 true인지 확인
     } catch (error) {
-        logger.error('Error while processing Interval');
+        logger.error('Error while processing Interval', error.message);
         return false;
     }
 }
 
 const getBotMessage = async () => {
     const url = `${baseUrl}${getDataPath}`
-    const postData = ''
     try {
         const response = await axios.get(url);
         if (response.data.status === "error") {
             logger.error('crawler responsed "error":', response.data.message);
-            postData = '!!크롤링 서버 오류!!'
-            return postData
+            return '!!크롤링 서버 오류!!'
         }
-        return generateBotMessage(response.data.data);
+        const data = await JSON.parse(JSON.stringify(response.data.data));
+        const parsedData = JSON.parse(data);
+        logger.info(parsedData);
+        const res = await generateBotMessage(parsedData);
+        return res;
 
-    } catch {
-        logger.error('something went wrong while generating bot message');
-        postData = '!!API 요청 오류!!'
-        return postData
+    } catch (error){
+        logger.error('Something went wrong while generating bot message', {
+            message: error.message,
+            stack: error.stack,
+            ...(error.response && { status: error.response.status, data: error.response.data })
+        });
+        return '!!API 요청 오류!!'
     }
 }
 module.exports = {checkNewPost, getBotMessage}
