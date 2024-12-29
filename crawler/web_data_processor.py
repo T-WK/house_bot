@@ -17,24 +17,29 @@ class WebDataProcessor:
         return max(list(map(int, data_dict.keys()))) < int(post_number)
 
 
-    def get_latest_contests():
+    def get_recent_contests(count):
         """
-        가장 최근 공모를 리턴함
+        가장 최근 공모를 count만큼 리턴함
         """
 
         # csv파일 열어서 dictionary로 파싱
         data_dict = CsvManager.csv_to_dict_by_key(Config.POST_NUMBER_KEY)
 
-        max_post_number = max(list(map(int, data_dict.keys())))
-        row_dict = data_dict[str(max_post_number)]
+        post_numbers = list(map(int, data_dict.keys()))
+        post_numbers.sort(reverse=True)
 
-        return row_dict
+        arr = []
 
+        for i in range(count):
+            post_number = post_numbers[i]
+            arr.append(data_dict[str(post_number)])
+
+        return arr
 
 
     def process_contest_check():
         """
-        새로 올라온 공모를 확인하고, 새로 올라온 공모를 저장함
+        새로 올라온 공모의 개수를 확인하고, 새로 올라온 공모를 저장함
         
         Args:
             soup : 서울 청년주택 공식 홈페이지 - 공모공지 게시판 웹 크롤링 데이터
@@ -70,7 +75,7 @@ class WebDataProcessor:
         # tbody 태그 선택
         tbody = soup.select_one('tbody')
 
-        result = False
+        result = 0
         # 공지사항 추출
         if tbody:
             rows = tbody.select('tr')
@@ -109,7 +114,7 @@ class WebDataProcessor:
                 # csv 저장
                 CsvManager.save_dict_to_csv(data_dict)
 
-                result = True
+                result = len(new_data_dict.keys())
             
         else:
             print("tbody 태그를 찾을 수 없습니다.")
@@ -122,5 +127,5 @@ class WebDataProcessor:
 
 
 if __name__ == "__main__":
-    print(WebDataProcessor.process_contest_check())
-    print(WebDataProcessor.get_latest_contests())
+    # print(WebDataProcessor.process_contest_check())
+    print(WebDataProcessor.get_recent_contests(3))
