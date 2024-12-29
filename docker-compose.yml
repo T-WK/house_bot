@@ -1,0 +1,14 @@
+  version: '3.8'
+
+  services:
+    node-server:
+      build:
+        context: ./node-server
+      depends_on:
+        - crawler  # Node.js 서버는 Python Flask 서버에 의존
+
+    crawler:
+      build:
+        context: ./crawler
+      ports:
+        - "8080:8080"  # Flask 서버 포트
