@@ -30,10 +30,9 @@ const getBotMessage = async () => {
             logger.error('crawler responsed "error":', response.data.message);
             return '!!크롤링 서버 오류!!'
         }
-        const data = await JSON.parse(JSON.stringify(response.data.data));
+        const data = JSON.parse(JSON.stringify(response.data.data));
         const parsedData = JSON.parse(data);
-        logger.info(parsedData);
-        const res = await generateBotMessage(parsedData);
+        const res = generateBotMessage(parsedData);
         return res;
 
     } catch (error){
