@@ -7,14 +7,14 @@ import json
 
 app = Flask(__name__)  # Flask 앱 인스턴스 생성
 
-@app.route('/api/posts/check-new', methods=['GET'])
-def check_new_post():
+@app.route('/api/posts/new-counts', methods=['GET'])
+def check_new_post_count():
     """
     새로운 모집공고가 있는지 확인함
     """
     result = None
     try:
-        # 공고 확인 결과: boolean
+        # 공고 확인 결과: int => 새로운 공고 개수
         is_new_post_exist =  WebDataProcessor.process_contest_check()
         
         result = {"status": "success", "data": is_new_post_exist}
@@ -26,7 +26,7 @@ def check_new_post():
     return jsonify(result)
     
 
-@app.route('/api/posts/recent-post', methods=['GET'])
+@app.route('/api/posts/recent-posts', methods=['GET'])
 def get_recent_post():
     """
     저장된 가장 최근 게시글을 가져와 json string으로 반환
@@ -34,12 +34,11 @@ def get_recent_post():
 
     result = None
     try:
-        data_dict = WebDataProcessor.get_latest_contests()
-    
-        # 딕셔너리를 JSON 문자열로 변환
-        json_string = json.dumps(data_dict, ensure_ascii=False)
+        count = int(request.args.get('count', default=1))
+        data_arr = WebDataProcessor.get_recent_contests(count)
 
-        result = {"status": "success", "data": json_string}
+        # 배열 그대로를 리턴
+        result = {"status": "success", "data": data_arr}
 
     except Exception as e:
         result =  {"status": "error", "message": str(e)}
