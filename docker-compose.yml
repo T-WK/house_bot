@@ -10,5 +10,18 @@
     crawler:
       build:
         context: ./crawler
+      depends_on:
+        - selenium
       ports:
         - "8080:8080"  # Flask 서버 포트
+      environment:
+        SELENIUM_URL: "http://selenium:4444/wd/hub"
+      
+    selenium:
+      image: selenium/standalone-chrome:latest
+      platform: linux/amd64
+      shm_size: 2g  # 공유 메모리 크기를 2GB로 설정
+      ports:
+        - "4444:4444"
+      environment:
+        SE_OPENTELEMETRY_ENABLED: "false"

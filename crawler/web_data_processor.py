@@ -1,9 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
-
+import os
 from config import Config
 from csv_manager import CsvManager
 
@@ -46,19 +47,22 @@ class WebDataProcessor:
             tbody : 게시글 테이블
             new_data_dict : 새로 올라온 공고글 데이터
         """
-        
+        SELENIUM_URL = os.getenv("SELENIUM_URL","http://selenium:4444/wd/hub")
         # csv파일 열어서 dictionary로 파싱
         data_dict = CsvManager.csv_to_dict_by_key(Config.POST_NUMBER_KEY)
 
 
         # ChromeDriver 설정
-        options = webdriver.ChromeOptions()
+        options = Options()
         options.add_argument("--headless")  # 브라우저 창을 열지 않음 (옵션)
         options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer");
         options.add_argument("--disable-dev-shm-usage")
 
         # WebDriver 생성
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver = webdriver.Remote(command_executor=SELENIUM_URL, options=options)
 
         # URL로 이동
         driver.get(Config.ANNOUNCEMENT_LINK)
