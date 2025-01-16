@@ -61,8 +61,8 @@ class WebDataProcessor:
         options.add_argument("--disable-dev-shm-usage")
 
         # WebDriver 생성
-        #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver = webdriver.Remote(command_executor=SELENIUM_URL, options=options)
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        #driver = webdriver.Remote(command_executor=SELENIUM_URL, options=options)
 
         # URL로 이동
         driver.get(Config.ANNOUNCEMENT_LINK)

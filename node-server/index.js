@@ -31,9 +31,10 @@ client.on('messageCreate', async (message) => {
 client.login(token);
 
 const handlePostUpdates = async () => {
-    if (await checkNewPost()) {
+    const post_cnt = await checkNewPost();
+    if (post_cnt > 0) {
         const channel = client.channels.cache.get(targetChannelId);
-        const message = await getBotMessage();
+        const message = await getBotMessage(post_cnt);
         channel.send(message);
     } else {
         logger.info('Checked update, found none');
